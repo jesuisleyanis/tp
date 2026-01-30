@@ -92,6 +92,15 @@ def upsert_from_staging(config, target_table, staging_table, key_cols, update_co
     conn.close()
 
 
+def upsert_keys_from_staging(config, target_table, staging_table, key_cols):
+    col_list = ",".join(key_cols)
+    updates = ",".join([f"{c}=VALUES({c})" for c in key_cols])
+    sql = f"INSERT INTO {target_table} ({col_list}) SELECT {col_list} FROM {staging_table} ON DUPLICATE KEY UPDATE {updates}"
+    conn = connect_mysql(config)
+    run_sql(conn, sql)
+    conn.close()
+
+
 def drop_table(config, table):
     conn = connect_mysql(config)
     run_sql(conn, f"DROP TABLE IF EXISTS {table}")

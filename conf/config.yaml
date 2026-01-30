@@ -28,6 +28,7 @@ mysql:
   database: ${MYSQL_DB}
   user_env: MYSQL_USER
   password_env: MYSQL_PASSWORD
+  jdbc_jar_url: https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.3.0/mysql-connector-j-8.3.0.jar
 taxonomy:
   categories_url: https://static.openfoodfacts.org/data/taxonomies/categories.json
   countries_url: https://static.openfoodfacts.org/data/taxonomies/countries.json

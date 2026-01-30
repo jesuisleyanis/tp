@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 data/output/
+data/jars/
 .sparkStaging/
 spark-warehouse/
 *.log

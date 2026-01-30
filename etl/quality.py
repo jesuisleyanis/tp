@@ -94,7 +94,7 @@ def anomalies_sample(df, path):
     tmp_dir = path + "_tmp"
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir)
-    sample = df.filter(F.size(F.col("quality_issues")) > 0).select("code", "product_name_resolved", "quality_issues")
+    sample = df.filter(F.size(F.col("quality_issues")) > 0).select("code", "product_name_resolved", F.to_json(F.col("quality_issues")).alias("quality_issues"))
     sample.coalesce(1).write.mode("overwrite").option("header", "true").csv(tmp_dir)
     part_files = [p for p in os.listdir(tmp_dir) if p.startswith("part-")]
     if part_files:

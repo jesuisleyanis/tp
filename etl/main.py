@@ -1,6 +1,7 @@
 import argparse
 import os
 import yaml
+import requests
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from . import bronze, silver, gold, quality, scd2, taxonomies, io_mysql
@@ -11,9 +12,34 @@ def load_config(path):
         return yaml.safe_load(f)
 
 
+def ensure_mysql_driver(config):
+    url = config.get("mysql", {}).get("jdbc_jar_url")
+    jar_dir = os.path.join("data", "jars")
+    jar_name = "mysql-connector-j-8.3.0.jar"
+    jar_path = os.path.join(jar_dir, jar_name)
+    if os.path.exists(jar_path):
+        return jar_path
+    if not url:
+        raise ValueError("mysql.jdbc_jar_url is not configured")
+    os.makedirs(jar_dir, exist_ok=True)
+    r = requests.get(url, stream=True, timeout=120)
+    r.raise_for_status()
+    with open(jar_path, "wb") as f:
+        for chunk in r.iter_content(chunk_size=1024 * 1024):
+            if chunk:
+                f.write(chunk)
+    return jar_path
+
+
 def spark_session(config):
+    jar_path = ensure_mysql_driver(config)
     builder = SparkSession.builder.appName(config["spark"]["app_name"]).master(config["spark"]["master"])
     builder = builder.config("spark.sql.shuffle.partitions", str(config["spark"]["shuffle_partitions"]))
+    builder = builder.config("spark.driver.extraJavaOptions", "-Djava.security.manager=allow")
+    builder = builder.config("spark.executor.extraJavaOptions", "-Djava.security.manager=allow")
+    builder = builder.config("spark.jars", jar_path)
+    builder = builder.config("spark.driver.extraClassPath", jar_path)
+    builder = builder.config("spark.executor.extraClassPath", jar_path)
     return builder.getOrCreate()
 
 
@@ -32,7 +58,7 @@ def upsert_dimension(df, config, table, key_cols, update_cols):
 def upsert_bridge(df, config, table, key_cols):
     stg = f"{table}_stg"
     io_mysql.write_staging(df, config, stg)
-    io_mysql.upsert_from_staging(config, table, stg, key_cols, key_cols)
+    io_mysql.upsert_keys_from_staging(config, table, stg, key_cols)
     io_mysql.drop_table(config, stg)
 
 
