@@ -10,7 +10,7 @@ Pipeline
 
 Bronze
 - Entree sample par defaut via l API OpenFoodFacts, ecriture JSONL local
-- Entree full via chemin fourni
+- Entree full via export complet telecharge depuis data.full_url ou fichier local
 
 Silver
 - Choix langue via data.language_preference
@@ -18,10 +18,10 @@ Silver
 - Dedoublonnage: row_number par code, last_modified_t decroissant
 
 Gold et modele
-- dim_time: date, annee, mois, semaine, jour
+- dim_time: date, annee, mois, semaine, iso_week, jour
 - dim_brand, dim_category, dim_country avec cles stables
-- dim_product en SCD2 avec product_sk auto, attr_hash, is_current
-- fact_nutrition_snapshot par produit et date
+- dim_product en SCD2 avec product_sk auto, attr_hash, is_current, countries_multi
+- fact_nutrition_snapshot par produit et date avec sodium_100g
 - bridges N-N: produit-categorie, produit-pays
 
 Strategie SCD2

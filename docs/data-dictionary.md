@@ -8,6 +8,7 @@ dim_time
 - year SMALLINT
 - month TINYINT
 - week TINYINT
+- iso_week TINYINT
 - day TINYINT
 
 dim_brand
@@ -16,24 +17,25 @@ dim_brand
 
 dim_category
 - category_sk BIGINT, PK
-- category_tag VARCHAR
-- category_name VARCHAR
-- category_level INT
-- category_parent VARCHAR
+- category_code VARCHAR
+- category_name_fr VARCHAR
+- level INT
+- parent_category_sk BIGINT
 - category_level2 VARCHAR
 
 dim_country
 - country_sk BIGINT, PK
-- country_tag VARCHAR
-- country_name VARCHAR
+- country_code VARCHAR
+- country_name_fr VARCHAR
 
 dim_product
 - product_sk BIGINT, PK
 - code VARCHAR, cle naturelle
-- product_name_resolved VARCHAR
+- product_name VARCHAR
 - brand_sk BIGINT, FK dim_brand
 - category_sk BIGINT, FK dim_category
 - country_sk BIGINT, FK dim_country
+- countries_multi JSON
 - nutriscore_grade CHAR(1)
 - nova_group INT
 - ecoscore_grade CHAR(1)
@@ -51,10 +53,12 @@ bridge_product_country
 - country_sk BIGINT, FK dim_country
 
 fact_nutrition_snapshot
+- fact_id BIGINT, PK
 - product_sk BIGINT, FK dim_product
 - time_sk INT, FK dim_time
 - sugars_100g DOUBLE
 - salt_100g DOUBLE
+- sodium_100g DOUBLE
 - fat_100g DOUBLE
 - saturated_fat_100g DOUBLE
 - proteins_100g DOUBLE

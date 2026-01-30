@@ -30,6 +30,9 @@ Script tout-en-un
 Requetes analytiques
    make sql
 
+Tableau de bord qualite
+   make quality
+
 Fichiers de sortie
 - data/output/quality_metrics.json
 - data/output/anomalies.csv
@@ -41,7 +44,7 @@ Changer la langue de preference
 - Modifier conf/config.yaml -> data.language_preference
 
 Mode full
-- Deposer un export OpenFoodFacts JSONL/CSV dans data/input/full.jsonl ou definir un chemin avec --input
+- L ETL telecharge un export complet si data.full_url est defini
 - Exemple
   python -m etl.main --mode full --config conf/config.yaml --input /chemin/vers/export.jsonl
 

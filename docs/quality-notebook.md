@@ -23,6 +23,9 @@ Anomalies
 - data/output/anomalies.csv
 - Colonnes: code, product_name_resolved, quality_issues
 
+Tableau de bord SQL
+- sql/quality_dashboard.sql
+
 Exemples d anomalies
 - sugars_100g hors bornes
 - salt_100g hors bornes

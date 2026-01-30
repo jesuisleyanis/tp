@@ -12,15 +12,23 @@ Mode sample
 - Telechargement automatique d un seed via l API OpenFoodFacts
 - Fichier local par defaut: data/input/sample.jsonl
 
+Mode full
+- Telechargement d un export complet si data.full_url est defini
+- Fichier local par defaut: data/input/full.jsonl
+
 Commandes
 - make up
 - make etl
 - make test
 - make sql
+- make quality
 
 Sorties qualite
 - data/output/quality_metrics.json
 - data/output/anomalies.csv
+
+Tableau de bord SQL
+- sql/quality_dashboard.sql
 
 Reglages principaux
 - conf/config.yaml

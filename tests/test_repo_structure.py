@@ -20,6 +20,7 @@ def test_repo_structure():
         "etl/io_mysql.py",
         "sql/ddl_mysql.sql",
         "sql/analytics.sql",
+        "sql/quality_dashboard.sql",
         "tests/test_etl_local_small.py",
         "tests/test_mysql_loaded.py",
         "tests/test_quality_metrics.py",

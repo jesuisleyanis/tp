@@ -23,3 +23,7 @@ test:
 sql:
 	@if [ ! -f .env ]; then cp .env.example .env; fi
 	set -a; . ./.env; set +a; docker compose exec -T mysql mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DB < sql/analytics.sql
+
+quality:
+	@if [ ! -f .env ]; then cp .env.example .env; fi
+	set -a; . ./.env; set +a; docker compose exec -T mysql mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DB < sql/quality_dashboard.sql

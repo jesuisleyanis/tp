@@ -5,16 +5,16 @@ erDiagram
   }
   dim_category {
     BIGINT category_sk PK
-    VARCHAR category_tag
-    VARCHAR category_name
-    INT category_level
-    VARCHAR category_parent
+    VARCHAR category_code
+    VARCHAR category_name_fr
+    INT level
+    BIGINT parent_category_sk
     VARCHAR category_level2
   }
   dim_country {
     BIGINT country_sk PK
-    VARCHAR country_tag
-    VARCHAR country_name
+    VARCHAR country_code
+    VARCHAR country_name_fr
   }
   dim_time {
     INT time_sk PK
@@ -22,15 +22,17 @@ erDiagram
     SMALLINT year
     TINYINT month
     TINYINT week
+    TINYINT iso_week
     TINYINT day
   }
   dim_product {
     BIGINT product_sk PK
     VARCHAR code
-    VARCHAR product_name_resolved
+    VARCHAR product_name
     BIGINT brand_sk FK
     BIGINT category_sk FK
     BIGINT country_sk FK
+    JSON countries_multi
     CHAR nutriscore_grade
     INT nova_group
     CHAR ecoscore_grade
@@ -48,10 +50,12 @@ erDiagram
     BIGINT country_sk FK
   }
   fact_nutrition_snapshot {
+    BIGINT fact_id PK
     BIGINT product_sk FK
     INT time_sk FK
     DOUBLE sugars_100g
     DOUBLE salt_100g
+    DOUBLE sodium_100g
     DOUBLE fat_100g
     DOUBLE saturated_fat_100g
     DOUBLE proteins_100g
