@@ -1,3 +1,4 @@
+.PHONY: up down reset etl run test sql quality
 SHELL=/bin/sh
 
 up:
@@ -12,7 +13,7 @@ reset:
 
 etl:
 	@if [ ! -f .env ]; then cp .env.example .env; fi
-	set -a; . ./.env; set +a; python -m etl.main --mode sample --config conf/config.yaml --input data/input/sample.jsonl
+	set -a; . ./.env; set +a; python3 -m etl.main --mode sample --config conf/config.yaml --input data/input/sample.jsonl
 
 run: etl
 
