@@ -1,0 +1,74 @@
+erDiagram
+  dim_brand {
+    BIGINT brand_sk PK
+    VARCHAR brand_name
+  }
+  dim_category {
+    BIGINT category_sk PK
+    VARCHAR category_tag
+    VARCHAR category_name
+    INT category_level
+    VARCHAR category_parent
+    VARCHAR category_level2
+  }
+  dim_country {
+    BIGINT country_sk PK
+    VARCHAR country_tag
+    VARCHAR country_name
+  }
+  dim_time {
+    INT time_sk PK
+    DATE date
+    SMALLINT year
+    TINYINT month
+    TINYINT week
+    TINYINT day
+  }
+  dim_product {
+    BIGINT product_sk PK
+    VARCHAR code
+    VARCHAR product_name_resolved
+    BIGINT brand_sk FK
+    BIGINT category_sk FK
+    BIGINT country_sk FK
+    CHAR nutriscore_grade
+    INT nova_group
+    CHAR ecoscore_grade
+    CHAR attr_hash
+    DATETIME effective_from
+    DATETIME effective_to
+    TINYINT is_current
+  }
+  bridge_product_category {
+    BIGINT product_sk FK
+    BIGINT category_sk FK
+  }
+  bridge_product_country {
+    BIGINT product_sk FK
+    BIGINT country_sk FK
+  }
+  fact_nutrition_snapshot {
+    BIGINT product_sk FK
+    INT time_sk FK
+    DOUBLE sugars_100g
+    DOUBLE salt_100g
+    DOUBLE fat_100g
+    DOUBLE saturated_fat_100g
+    DOUBLE proteins_100g
+    DOUBLE fiber_100g
+    DOUBLE energy_kcal_100g
+    CHAR nutriscore_grade
+    INT nova_group
+    CHAR ecoscore_grade
+    DOUBLE completeness_score
+    JSON quality_issues_json
+  }
+  dim_brand ||--o{ dim_product : has
+  dim_category ||--o{ dim_product : has
+  dim_country ||--o{ dim_product : has
+  dim_time ||--o{ fact_nutrition_snapshot : has
+  dim_product ||--o{ fact_nutrition_snapshot : has
+  dim_product ||--o{ bridge_product_category : maps
+  dim_category ||--o{ bridge_product_category : maps
+  dim_product ||--o{ bridge_product_country : maps
+  dim_country ||--o{ bridge_product_country : maps
