@@ -1,0 +1,41 @@
+data:
+  format: json
+  sample_url: https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=200
+  sample_path: data/input/sample.jsonl
+  full_path: data/input/full.jsonl
+  sample_size: 200
+  language_preference:
+    - fr
+    - en
+    - default
+  nutriment_keys:
+    - sugars_100g
+    - salt_100g
+    - fat_100g
+    - saturated_fat_100g
+    - proteins_100g
+    - fiber_100g
+    - energy_kcal_100g
+spark:
+  app_name: off_etl
+  master: local[*]
+  shuffle_partitions: 4
+  jdbc_batch_size: 1000
+mysql:
+  host: ${MYSQL_HOST}
+  port: ${MYSQL_PORT}
+  database: ${MYSQL_DB}
+  user_env: MYSQL_USER
+  password_env: MYSQL_PASSWORD
+taxonomy:
+  categories_url: https://static.openfoodfacts.org/data/taxonomies/categories.json
+  countries_url: https://static.openfoodfacts.org/data/taxonomies/countries.json
+quality:
+  min_nutriments: 4
+  sodium_salt_tolerance: 0.5
+  metrics_path: data/output/quality_metrics.json
+  anomalies_path: data/output/anomalies.csv
+outputs:
+  bronze_path: data/output/bronze
+  silver_path: data/output/silver
+  gold_path: data/output/gold

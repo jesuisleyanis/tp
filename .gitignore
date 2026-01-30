@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+data/output/
+.sparkStaging/
+spark-warehouse/
+*.log
+.metastore_db/
