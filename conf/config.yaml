@@ -2,6 +2,7 @@ data:
   format: json
   sample_url: https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=200
   sample_path: data/input/sample.jsonl
+  full_url: https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.jsonl.gz
   full_path: data/input/full.jsonl
   sample_size: 200
   language_preference:

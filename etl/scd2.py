@@ -10,7 +10,7 @@ def read_table(spark, config, table):
 
 def apply_scd2(spark, df_current, config):
     load_ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    tracked_cols = ["product_name_resolved", "brand_sk", "category_sk", "country_sk", "nutriscore_grade", "nova_group", "ecoscore_grade"]
+    tracked_cols = ["product_name", "brand_sk", "category_sk", "country_sk", "countries_multi", "nutriscore_grade", "nova_group", "ecoscore_grade"]
     df_h = df_current
     df_h = df_h.withColumn("attr_hash", F.sha2(F.concat_ws("||", *[F.coalesce(F.col(c).cast("string"), F.lit("")) for c in tracked_cols]), 256))
     df_h = df_h.withColumn("effective_from", F.lit(load_ts))
@@ -45,10 +45,11 @@ def apply_scd2(spark, df_current, config):
     if inserts_count > 0:
         io_mysql.write_staging(to_insert.select(
             "code",
-            "product_name_resolved",
+            "product_name",
             "brand_sk",
             "category_sk",
             "country_sk",
+            "countries_multi",
             "nutriscore_grade",
             "nova_group",
             "ecoscore_grade",
@@ -58,7 +59,7 @@ def apply_scd2(spark, df_current, config):
             "is_current"
         ), config, "dim_product_inserts")
         conn = io_mysql.connect_mysql(config)
-        sql = "INSERT INTO dim_product (code, product_name_resolved, brand_sk, category_sk, country_sk, nutriscore_grade, nova_group, ecoscore_grade, attr_hash, effective_from, effective_to, is_current) SELECT code, product_name_resolved, brand_sk, category_sk, country_sk, nutriscore_grade, nova_group, ecoscore_grade, attr_hash, effective_from, effective_to, is_current FROM dim_product_inserts"
+        sql = "INSERT INTO dim_product (code, product_name, brand_sk, category_sk, country_sk, countries_multi, nutriscore_grade, nova_group, ecoscore_grade, attr_hash, effective_from, effective_to, is_current) SELECT code, product_name, brand_sk, category_sk, country_sk, countries_multi, nutriscore_grade, nova_group, ecoscore_grade, attr_hash, effective_from, effective_to, is_current FROM dim_product_inserts"
         io_mysql.run_sql(conn, sql)
         conn.close()
         io_mysql.drop_table(config, "dim_product_inserts")

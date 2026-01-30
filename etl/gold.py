@@ -15,46 +15,49 @@ def build_dimensions(df, config, categories_taxo=None, countries_taxo=None):
     dim_time = dim_time.withColumn("year", F.year("date"))
     dim_time = dim_time.withColumn("month", F.month("date"))
     dim_time = dim_time.withColumn("week", F.weekofyear("date"))
+    dim_time = dim_time.withColumn("iso_week", F.weekofyear("date"))
     dim_time = dim_time.withColumn("day", F.dayofmonth("date"))
 
     dim_brand = df2.select(F.col("brand_primary").alias("brand_name")).where(F.col("brand_name").isNotNull()).distinct()
     dim_brand = dim_brand.withColumn("brand_sk", stable_sk(F.col("brand_name")))
 
-    categories = df2.select(F.explode_outer("categories_list").alias("category_tag")).where(F.col("category_tag").isNotNull()).distinct()
+    categories = df2.select(F.explode_outer("categories_list").alias("category_code")).where(F.col("category_code").isNotNull()).distinct()
     if categories_taxo is not None:
         cat = categories_taxo.select(
-            F.col("tag").alias("category_tag"),
-            F.col("name").alias("category_name"),
-            F.col("level").alias("category_level"),
-            F.col("parent_tag").alias("category_parent"),
+            F.col("tag").alias("category_code"),
+            F.col("name").alias("category_name_fr"),
+            F.col("level").alias("level"),
+            F.col("parent_tag").alias("parent_category_code"),
             F.col("level2").alias("category_level2")
         )
-        dim_category = categories.join(cat, "category_tag", "left")
-        dim_category = dim_category.withColumn("category_name", F.coalesce(F.col("category_name"), F.col("category_tag")))
-        dim_category = dim_category.withColumn("category_level", F.coalesce(F.col("category_level"), F.lit(1)))
-        dim_category = dim_category.withColumn("category_level2", F.coalesce(F.col("category_level2"), F.col("category_tag")))
+        dim_category = categories.join(cat, "category_code", "left")
     else:
-        dim_category = categories.withColumn("category_name", F.col("category_tag")).withColumn("category_level", F.lit(1)).withColumn("category_parent", F.lit(None)).withColumn("category_level2", F.col("category_tag"))
-    dim_category = dim_category.withColumn("category_sk", stable_sk(F.col("category_tag")))
+        dim_category = categories.withColumn("category_name_fr", F.col("category_code")).withColumn("level", F.lit(1)).withColumn("parent_category_code", F.lit(None)).withColumn("category_level2", F.col("category_code"))
 
-    countries = df2.select(F.explode_outer("countries_list").alias("country_tag")).where(F.col("country_tag").isNotNull()).distinct()
+    dim_category = dim_category.withColumn("category_sk", stable_sk(F.col("category_code")))
+    dim_category = dim_category.withColumn("parent_category_sk", stable_sk(F.col("parent_category_code")))
+    dim_category = dim_category.withColumn("category_name_fr", F.coalesce(F.col("category_name_fr"), F.col("category_code")))
+    dim_category = dim_category.withColumn("level", F.coalesce(F.col("level"), F.lit(1)))
+    dim_category = dim_category.withColumn("category_level2", F.coalesce(F.col("category_level2"), F.col("category_code")))
+
+    countries = df2.select(F.explode_outer("countries_list").alias("country_code")).where(F.col("country_code").isNotNull()).distinct()
     if countries_taxo is not None:
-        c = countries_taxo.select(F.col("tag").alias("country_tag"), F.col("name").alias("country_name"))
-        dim_country = countries.join(c, "country_tag", "left")
-        dim_country = dim_country.withColumn("country_name", F.coalesce(F.col("country_name"), F.col("country_tag")))
+        c = countries_taxo.select(F.col("tag").alias("country_code"), F.col("name").alias("country_name_fr"))
+        dim_country = countries.join(c, "country_code", "left")
+        dim_country = dim_country.withColumn("country_name_fr", F.coalesce(F.col("country_name_fr"), F.col("country_code")))
     else:
-        dim_country = countries.withColumn("country_name", F.col("country_tag"))
-    dim_country = dim_country.withColumn("country_sk", stable_sk(F.col("country_tag")))
+        dim_country = countries.withColumn("country_name_fr", F.col("country_code"))
+    dim_country = dim_country.withColumn("country_sk", stable_sk(F.col("country_code")))
 
     return df2, dim_time, dim_brand, dim_category, dim_country
 
 
 def build_bridges(df):
-    product_category = df.select(F.col("code"), F.explode_outer("categories_list").alias("category_tag")).where(F.col("category_tag").isNotNull())
-    product_category = product_category.withColumn("category_sk", stable_sk(F.col("category_tag")))
+    product_category = df.select(F.col("code"), F.explode_outer("categories_list").alias("category_code")).where(F.col("category_code").isNotNull())
+    product_category = product_category.withColumn("category_sk", stable_sk(F.col("category_code")))
 
-    product_country = df.select(F.col("code"), F.explode_outer("countries_list").alias("country_tag")).where(F.col("country_tag").isNotNull())
-    product_country = product_country.withColumn("country_sk", stable_sk(F.col("country_tag")))
+    product_country = df.select(F.col("code"), F.explode_outer("countries_list").alias("country_code")).where(F.col("country_code").isNotNull())
+    product_country = product_country.withColumn("country_sk", stable_sk(F.col("country_code")))
 
     return product_category, product_country
 
@@ -63,13 +66,15 @@ def build_dim_product_current(df):
     df2 = df.withColumn("brand_sk", stable_sk(F.col("brand_primary")))
     df2 = df2.withColumn("category_sk", stable_sk(F.col("category_primary")))
     df2 = df2.withColumn("country_sk", stable_sk(F.col("country_primary")))
+    df2 = df2.withColumn("countries_multi", F.to_json(F.col("countries_list")))
 
     cols = [
         "code",
-        "product_name_resolved",
+        F.col("product_name_resolved").alias("product_name"),
         "brand_sk",
         "category_sk",
         "country_sk",
+        "countries_multi",
         "nutriscore_grade",
         "nova_group",
         "ecoscore_grade"
@@ -86,6 +91,7 @@ def build_fact_snapshot(df, dim_time):
         "time_sk",
         "sugars_100g",
         "salt_100g",
+        "sodium_100g",
         "fat_100g",
         "saturated_fat_100g",
         "proteins_100g",

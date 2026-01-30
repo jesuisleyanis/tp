@@ -53,14 +53,32 @@ def ensure_sample(config):
     return path
 
 
+def ensure_full(config, input_path=None):
+    path = input_path or config["data"]["full_path"]
+    if os.path.exists(path):
+        return path
+    url = config["data"].get("full_url")
+    if not url:
+        raise FileNotFoundError("Full export file not found and no full_url configured")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if url.endswith(".gz"):
+        gz_path = path + ".gz"
+        download_file(url, gz_path)
+        with gzip.open(gz_path, "rb") as f_in:
+            with open(path, "wb") as f_out:
+                f_out.write(f_in.read())
+        os.remove(gz_path)
+    else:
+        download_file(url, path)
+    return path
+
+
 def read_bronze(spark, config, mode, input_path=None):
     schema = load_schema("conf/schema_off.json")
     if mode == "sample":
         path = input_path or ensure_sample(config)
     else:
-        path = input_path or config["data"]["full_path"]
-        if not os.path.exists(path):
-            raise FileNotFoundError("Full export file not found")
+        path = ensure_full(config, input_path)
     fmt = config["data"]["format"]
     if fmt == "json":
         df = spark.read.schema(schema).json(path)

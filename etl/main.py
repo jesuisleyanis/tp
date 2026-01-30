@@ -29,6 +29,13 @@ def upsert_dimension(df, config, table, key_cols, update_cols):
     io_mysql.drop_table(config, stg)
 
 
+def upsert_bridge(df, config, table, key_cols):
+    stg = f"{table}_stg"
+    io_mysql.write_staging(df, config, stg)
+    io_mysql.upsert_from_staging(config, table, stg, key_cols, key_cols)
+    io_mysql.drop_table(config, stg)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["sample", "full"], default="sample")
@@ -72,10 +79,10 @@ def main():
     bridge_product_category, bridge_product_country = gold.build_bridges(df_gold)
     dim_product_current = gold.build_dim_product_current(df_gold)
 
-    upsert_dimension(dim_time, config, "dim_time", ["time_sk"], ["date", "year", "month", "week", "day"])
+    upsert_dimension(dim_time, config, "dim_time", ["time_sk"], ["date", "year", "month", "week", "iso_week", "day"])
     upsert_dimension(dim_brand, config, "dim_brand", ["brand_sk"], ["brand_name"])
-    upsert_dimension(dim_category, config, "dim_category", ["category_sk"], ["category_tag", "category_name", "category_level", "category_parent", "category_level2"])
-    upsert_dimension(dim_country, config, "dim_country", ["country_sk"], ["country_tag", "country_name"])
+    upsert_dimension(dim_category, config, "dim_category", ["category_sk"], ["category_code", "category_name_fr", "level", "parent_category_sk", "category_level2"])
+    upsert_dimension(dim_country, config, "dim_country", ["country_sk"], ["country_code", "country_name_fr"])
 
     scd2_counts = scd2.apply_scd2(spark, dim_product_current, config)
 
@@ -84,8 +91,8 @@ def main():
     bridge_category = bridge_product_category.join(mapping, "code", "left").select("product_sk", "category_sk").where(F.col("product_sk").isNotNull())
     bridge_country = bridge_product_country.join(mapping, "code", "left").select("product_sk", "country_sk").where(F.col("product_sk").isNotNull())
 
-    io_mysql.write_truncate(bridge_category, config, "bridge_product_category")
-    io_mysql.write_truncate(bridge_country, config, "bridge_product_country")
+    upsert_bridge(bridge_category, config, "bridge_product_category", ["product_sk", "category_sk"])
+    upsert_bridge(bridge_country, config, "bridge_product_country", ["product_sk", "country_sk"])
 
     fact = gold.build_fact_snapshot(df_gold, dim_time)
     fact = fact.join(mapping, "code", "left")
@@ -96,6 +103,7 @@ def main():
         "time_sk",
         "sugars_100g",
         "salt_100g",
+        "sodium_100g",
         "fat_100g",
         "saturated_fat_100g",
         "proteins_100g",
@@ -118,6 +126,7 @@ def main():
         [
             "sugars_100g",
             "salt_100g",
+            "sodium_100g",
             "fat_100g",
             "saturated_fat_100g",
             "proteins_100g",

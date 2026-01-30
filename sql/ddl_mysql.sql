@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS dim_time (
   year SMALLINT,
   month TINYINT,
   week TINYINT,
+  iso_week TINYINT,
   day TINYINT,
   PRIMARY KEY (time_sk)
 ) ENGINE=InnoDB;
@@ -17,30 +18,32 @@ CREATE TABLE IF NOT EXISTS dim_brand (
 
 CREATE TABLE IF NOT EXISTS dim_category (
   category_sk BIGINT NOT NULL,
-  category_tag VARCHAR(255),
-  category_name VARCHAR(255),
-  category_level INT,
-  category_parent VARCHAR(255),
+  category_code VARCHAR(255),
+  category_name_fr VARCHAR(255),
+  level INT,
+  parent_category_sk BIGINT,
   category_level2 VARCHAR(255),
   PRIMARY KEY (category_sk),
-  UNIQUE KEY ux_category_tag (category_tag)
+  UNIQUE KEY ux_category_code (category_code),
+  KEY ix_category_parent (parent_category_sk)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS dim_country (
   country_sk BIGINT NOT NULL,
-  country_tag VARCHAR(255),
-  country_name VARCHAR(255),
+  country_code VARCHAR(255),
+  country_name_fr VARCHAR(255),
   PRIMARY KEY (country_sk),
-  UNIQUE KEY ux_country_tag (country_tag)
+  UNIQUE KEY ux_country_code (country_code)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS dim_product (
   product_sk BIGINT NOT NULL AUTO_INCREMENT,
   code VARCHAR(64) NOT NULL,
-  product_name_resolved VARCHAR(512),
+  product_name VARCHAR(512),
   brand_sk BIGINT,
   category_sk BIGINT,
   country_sk BIGINT,
+  countries_multi JSON,
   nutriscore_grade CHAR(1),
   nova_group INT,
   ecoscore_grade CHAR(1),
@@ -79,10 +82,12 @@ CREATE TABLE IF NOT EXISTS bridge_product_country (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS fact_nutrition_snapshot (
+  fact_id BIGINT NOT NULL AUTO_INCREMENT,
   product_sk BIGINT NOT NULL,
   time_sk INT NOT NULL,
   sugars_100g DOUBLE,
   salt_100g DOUBLE,
+  sodium_100g DOUBLE,
   fat_100g DOUBLE,
   saturated_fat_100g DOUBLE,
   proteins_100g DOUBLE,
@@ -93,7 +98,8 @@ CREATE TABLE IF NOT EXISTS fact_nutrition_snapshot (
   ecoscore_grade CHAR(1),
   completeness_score DOUBLE,
   quality_issues_json JSON,
-  PRIMARY KEY (product_sk, time_sk),
+  PRIMARY KEY (fact_id),
+  UNIQUE KEY ux_fact_product_time (product_sk, time_sk),
   KEY ix_fact_time (time_sk),
   KEY ix_fact_nutriscore (nutriscore_grade),
   CONSTRAINT fk_fact_product FOREIGN KEY (product_sk) REFERENCES dim_product(product_sk) ON DELETE CASCADE,
